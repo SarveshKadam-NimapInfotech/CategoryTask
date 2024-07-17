@@ -1,0 +1,107 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@using CategoryTask.Models.Data
+@model List<CategoryTask.Models.Data.Product>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            background-image: url('https://www.shutterstock.com/shutterstock/photos/2431469203/display_1500/stock-photo-businessman-or-customer-add-products-to-card-while-online-shopping-at-store-e-commerce-marketing-2431469203.jpg'); /* Replace with your image URL */
+        }
+
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .table thead {
+            background-color: #ffc107;
+        }
+
+        .table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .no-data {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-top: 20px;
+        }
+
+        .btn-edit {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+            .btn-edit:hover {
+                color: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="text-center mb-4">Display All Product List</h3>
+                        @if (Model != null && Model.Any())
+                        {
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Product Id</th>
+                                        <th>Product Name</th>
+                                        <th>Category Id</th>
+                                        <th>Category Name</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td>@item.Id</td>
+                                            <td>@item.Name</td>
+                                            <td>@item.CategoryId</td>
+                                            <td>@item.Category.Name</td>
+                                            <td><a class="btn-edit" asp-area="" asp-action="Edit" asp-controller="Product" asp-route-id="@item.Id">Edit</a></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <div class="no-data">There is no data found</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="link-container text-center mt-5">
+        @* <h3 class="mb-4">Manage Your Application</h3> *@
+        @* <a class="btn btn-primary btn-lg me-2" href="@Url.Action("AddCategory", "Category")">Add Categories</a> *@
+         <a class="btn btn-primary btn-lg" href="@Url.Action("AddProduct", "Product")">Add Products</a> 
+        @* <a class="btn btn-primary btn-lg me-2" href="@Url.Action("EditCategory", "Category")">Edit Categories</a> *@
+         <a class="btn btn-primary btn-lg" href="@Url.Action("EditProduct", "Product")">Edit Products</a> 
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
