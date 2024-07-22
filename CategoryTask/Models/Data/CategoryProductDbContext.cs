@@ -12,5 +12,7 @@ namespace CategoryTask.Models.Data
         public DbSet<Category> Categories { get; set; }
 
         public DbSet<Product> Products { get; set; }
+
+        public DbSet<AppSetting> AppSettings { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using CategoryTask.Interface;
+﻿using CategoryTask.Api.ApiServices;
+using CategoryTask.Interface;
 using CategoryTask.Models.Data;
 using CategoryTask.Models.ViewModel;
 using Microsoft.AspNetCore.Mvc;
@@ -9,46 +10,90 @@ namespace CategoryTask.Controllers
     {
 
         private readonly ICategory _category;
+        private readonly CategoryApiService _categoryApiService;
+        private readonly IAppSettingsService _appSettingsService;
+        private bool _useApi;
 
-        private readonly HttpClient client;
-
-        public CategoryController(ICategory category)
+        public CategoryController(ICategory category, CategoryApiService categoryApiService, IAppSettingsService appSettingsService)
         {
             _category = category;
-            
+            _categoryApiService = categoryApiService;
+            _appSettingsService = appSettingsService;
+
+        }
+
+        private async Task InitializeSettingsAsync()
+        {
+            _useApi = await _appSettingsService.GetUseApiFlagAsync();
         }
 
         [HttpGet]
         public async Task<IActionResult> ListCategory(int pageNo = 1, int PageSize = 10)
         {
-            var categories = await _category.GetAllCategoriesAsync(pageNo, PageSize);
-            
-            return View(categories);
+            await InitializeSettingsAsync();
+            IEnumerable<Category> categories;
+            int totalCategories;
+            if (_useApi)
+            {
+                var response = await _categoryApiService.GetCategoriesAsync(pageNo, PageSize);
+                categories = response;
+                totalCategories = categories.Count();
+            }
+            else
+            {
+                 categories = await _category.GetAllCategoriesAsync(pageNo, PageSize);
 
+            }
 
-
-
+                return View(categories);
         }
+
         [HttpGet]
         public async Task<IActionResult> AddCategory()
         {
+            await InitializeSettingsAsync();
             return View();
         }
         [HttpPost]
         public async Task<IActionResult> AddCategory(addCategoryRequest addCategoryRequest)
         {
-            var categry = new Category
+            await InitializeSettingsAsync();
+            if (_useApi)
             {
-                Name = addCategoryRequest.Name,
-                IsActive = addCategoryRequest.IsActive,
-            };
-            await _category.AddCategoryAsync(categry);
+                await _categoryApiService.CreateCategoryAsync(addCategoryRequest);
+            }
+            else
+            {
+                var categry = new Category
+                {
+                    Name = addCategoryRequest.Name,
+                    IsActive = addCategoryRequest.IsActive,
+                };
+                await _category.AddCategoryAsync(categry);
+
+            }
+
             return Redirect("List");
         }
         [HttpGet]
         public async Task<IActionResult> EditCategory(int id)
         {
-            var category = await _category.GetByIdAsync(id);
+            await InitializeSettingsAsync();
+            if (id == 0)
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            Category category;
+            if (_useApi)
+            { 
+                category = await _categoryApiService.GetCategoryByIdAsync(id);
+            }
+            else
+            {
+                category = await _category.GetByIdAsync(id);
+            }
+
             if (category != null)
             {
                 var editRequest = new editCategoryRequest
@@ -64,26 +109,45 @@ namespace CategoryTask.Controllers
         [HttpPost]
         public async Task<IActionResult> EditCategory(editCategoryRequest editCategoryRequest)
         {
-            var category = new Category
+            await InitializeSettingsAsync();
+            if (ModelState.IsValid)
             {
-                Name = editCategoryRequest.Name,
-                IsActive = editCategoryRequest.IsActive,
-                Id = editCategoryRequest.Id
-            };
-            var result = await _category.UpdateCategoryAsync(editCategoryRequest.Id, category);
-            return RedirectToAction("List");
+                Category category;
+                if (_useApi)
+                {
+                    await _categoryApiService.UpdateCategoryAsync(editCategoryRequest);
+                }
+                else
+                { 
+                    category = new Category
+                    {
+                        Name = editCategoryRequest.Name,
+                        IsActive = editCategoryRequest.IsActive,
+                        Id = editCategoryRequest.Id
+                    };
+                    var result = await _category.UpdateCategoryAsync(editCategoryRequest.Id, category);
+                }
 
+            }
+                return RedirectToAction("List");
 
 
         }
         [HttpPost]
         public async Task<IActionResult> Delete(deleteViewModel deleteViewModel)
         {
-            var result = await _category.DeleteCategoryAsyn(deleteViewModel.Id);
-            if (result == true)
+            await InitializeSettingsAsync();
+            
+            if (_useApi)
             {
-                return RedirectToAction("List");
+                await _categoryApiService.DeleteCategoryAsync(deleteViewModel);
             }
+            else
+            {
+                await _category.DeleteCategoryAsyn(deleteViewModel.Id);
+
+            }
+            
             return RedirectToAction("Edit");
         }
        
